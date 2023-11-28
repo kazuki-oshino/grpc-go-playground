@@ -5,10 +5,12 @@ import (
 	"fmt"
 	pb "github.com/kazuki-oshino/grpc-go-playground/gen/pb/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 	"log"
 	"net"
 	"os"
 	"os/signal"
+	"time"
 )
 
 // server is used to implement helloworld.GreeterServer.
@@ -29,7 +31,15 @@ func main() {
 		panic(err)
 	}
 
-	s := grpc.NewServer()
+	s := grpc.NewServer(
+		grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
+			MinTime:             10 * time.Second,
+			PermitWithoutStream: true,
+		}),
+		grpc.KeepaliveParams(keepalive.ServerParameters{
+			MaxConnectionIdle: 20 * time.Second,
+		}),
+	)
 	pb.RegisterGreeterServer(s, &server{})
 
 	go func() {
